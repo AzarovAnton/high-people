@@ -1,8 +1,8 @@
 <template>
   <div class="hello">
     <h3>High people</h3>
-    <ul class="list">
-      <li v-for="(person, index) in highPeopleList" v-bind:key="index" class="list_item">
+    <ul class="list" id="list">
+      <li v-for="(person, index) in highPeopleList" v-bind:key="index" class="list_item" >
         <div>
           <div> <span>Nane:</span> {{person.name}} </div> 
           <div> <span>Gender:</span> {{person.gender}}  </div> 
@@ -34,15 +34,37 @@ export default {
   },
   data() {
     return {
-      peopleList: []
+      peopleList: [],
+      nextPage: 1,
+      continueSearch: true,
+      searching: false
     }
   },
   created() {
-    axios
-      .get('https://swapi.co/api/people/')
-      .then(response => {
-        this.peopleList = response.data.results;
-      });
+    window.addEventListener('scroll', () => {
+      if (document.body.clientHeight - window.scrollY - 300 <  window.innerHeight)
+        this.getPeople();
+    });
+    this.getPeople();
+  },
+  methods:{
+    getPeople() {
+      if (this.continueSearch && !this.searching){
+        this.searching = true;
+        axios
+          .get(`https://swapi.co/api/people/?page=${this.nextPage}`)
+          .then(response => {
+              this.peopleList = this.peopleList.concat(response.data.results);
+              this.nextPage++;
+              this.searching = false;
+              if (document.getElementById('list').offsetHeight < window.innerHeight)
+                this.getPeople();
+          }).catch(function () {
+              this.continueSearch = false;
+              this.searching = false;
+          })
+      }
+    }
   },
   computed: {
     highPeopleList() {
